@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   description: "Trading Disiplin, Arahan KAFRA.",
   metadataBase: new URL("https://kafrasignal.ezos.my"),
   icons: {
-    icon: "/kafra-logo.png",
-    shortcut: "/kafra-logo.png",
-    apple: "/kafra-logo.png",
+    icon: "/kafra-logo-nav.png",
+    shortcut: "/kafra-logo-nav.png",
+    apple: "/kafra-logo-nav.png",
   },
   openGraph: {
     title: "KAFRA SIGNAL",

@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, BarChart3, CalendarClock, Clipboard, Moon, Package, ShieldCheck, Signal, Sun, Timer, User } from "lucide-react";
+import Image from "next/image";
+import { AlertTriangle, BarChart3, CalendarClock, Clipboard, Eye, EyeOff, Moon, Package, ShieldCheck, Signal, Sun, Timer, User } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { AccessKey, PerformanceLog, Signal as TradingSignal, SignalMode } from "@/lib/types";
 
@@ -23,6 +24,7 @@ const SCALPING_INTERVAL_SECONDS = 30 * 60;
 const INTRADAY_INTERVAL_SECONDS = 4 * 60 * 60;
 const GOLD_PIPS_MULTIPLIER = 10;
 const PERFORMANCE_DEFAULT_PAGE_SIZE = 10;
+const ACCESS_KEY_STORAGE_KEY = "KAFRA-access-key";
 
 function fmt(value: number) {
   return value.toFixed(2);
@@ -71,6 +73,7 @@ export default function Home() {
   const [accessKey, setAccessKey] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(false);
+  const [showAccessKey, setShowAccessKey] = useState(false);
 
   const [tab, setTab] = useState<Tab>("signal");
   const [mode, setMode] = useState<SignalMode>("scalping");
@@ -134,8 +137,24 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedAccessKey = window.localStorage.getItem(ACCESS_KEY_STORAGE_KEY);
+    if (savedAccessKey) setAccessKey(savedAccessKey);
+  }, []);
+
+  useEffect(() => {
     if (typeof window !== "undefined") window.localStorage.setItem("KAFRA-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const trimmed = accessKey.trim();
+    if (!trimmed) {
+      window.localStorage.removeItem(ACCESS_KEY_STORAGE_KEY);
+      return;
+    }
+    window.localStorage.setItem(ACCESS_KEY_STORAGE_KEY, trimmed);
+  }, [accessKey]);
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? window.localStorage.getItem("KAFRA-design") : null;
@@ -572,7 +591,6 @@ export default function Home() {
 
   const logout = () => {
     setAuthorized(false);
-    setAccessKey("");
     setAuthError(null);
     setLoadingAuth(false);
     setSessionSeconds(SESSION_MINUTES * 60);
@@ -583,6 +601,13 @@ export default function Home() {
     setSubscriptionExpiry(null);
     setShowLoginDisclaimer(false);
     setActiveSignalPopup(null);
+  };
+
+  const clearSavedAccessKey = () => {
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(ACCESS_KEY_STORAGE_KEY);
+    }
+    setAccessKey("");
   };
 
   const refreshNow = async () => {
@@ -600,6 +625,16 @@ export default function Home() {
     return (
       <main className={`grid min-h-screen place-items-center px-4 ${loginDark ? "" : "light-theme bg-[#e2e8f0] text-[#0f172a]"} ${designVariant === "executive" ? "design-executive" : ""}`}>
         <section className={`scanlines w-full max-w-md rounded-xl p-6 ${loginDark ? "border border-emerald-500/50 bg-black/80 shadow-[0_0_40px_rgba(16,185,129,0.2)]" : "border border-[#0f172a]/20 bg-[#f8fafc] shadow-[0_10px_30px_rgba(15,23,42,0.14)]"}`}>
+          <div className="mb-4 flex justify-center">
+            <Image
+              src="/kafra-logo-nav.png"
+              alt="KAFRA logo"
+              width={86}
+              height={86}
+              priority
+              className="h-[86px] w-[86px] object-contain"
+            />
+          </div>
           <div className="mb-3 flex justify-end gap-2">
             <button
               onClick={() => setDesignVariant((prev) => (prev === "tactical" ? "executive" : "tactical"))}
@@ -629,14 +664,25 @@ export default function Home() {
           >
             KAFRA FIREWALL
           </h1>
-          <p className={`mb-6 text-sm ${loginDark ? "text-emerald-300/70" : "text-slate-700"}`}>Trading Disiplin, Arahan KAFRA.</p>
           <label className="mb-2 block text-xs uppercase tracking-[0.25em] text-emerald-300">Authorization Key</label>
-          <input
-            value={accessKey}
-            onChange={(e) => setAccessKey(e.target.value)}
-            className={`w-full rounded border px-3 py-2 outline-none ring-emerald-400/40 focus:ring ${loginDark ? "border-emerald-400/30 bg-black text-emerald-200" : "border-emerald-700/60 bg-white text-[#0f172a]"}`}
-            placeholder="ENTER_KEY"
-          />
+          <div className="relative">
+            <input
+              type={showAccessKey ? "text" : "password"}
+              value={accessKey}
+              onChange={(e) => setAccessKey(e.target.value)}
+              className={`w-full rounded border px-3 py-2 pr-11 outline-none ring-emerald-400/40 focus:ring ${loginDark ? "border-emerald-400/30 bg-black text-emerald-200" : "border-emerald-700/60 bg-white text-[#0f172a]"}`}
+              placeholder="ENTER_KEY"
+            />
+            <button
+              type="button"
+              onClick={() => setShowAccessKey((prev) => !prev)}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 ${loginDark ? "text-emerald-300 hover:bg-emerald-500/15" : "text-slate-600 hover:bg-slate-100"}`}
+              aria-label={showAccessKey ? "Hide access key" : "Show access key"}
+              title={showAccessKey ? "Hide" : "Show"}
+            >
+              {showAccessKey ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
           {authError && <p className="mt-3 flex items-center gap-2 text-sm text-red-400"><AlertTriangle size={14} />{authError}</p>}
           {!supabase && <p className="mt-3 text-xs text-red-400">Supabase environment variables are missing.</p>}
           <button
@@ -649,6 +695,17 @@ export default function Home() {
             }`}
           >
             {loadingAuth ? "VALIDATING..." : "AUTHORIZE"}
+          </button>
+          <button
+            onClick={clearSavedAccessKey}
+            type="button"
+            className={`mt-2 w-full rounded border py-2 text-xs ${
+              loginDark
+                ? "border-red-400/40 text-red-300 hover:bg-red-500/10"
+                : "border-red-500/40 text-red-700 hover:bg-red-50"
+            }`}
+          >
+            CLEAR SAVED KEY
           </button>
         </section>
       </main>
@@ -666,12 +723,12 @@ export default function Home() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="exec-top-brand leading-none text-blue-400">KAFRA SIGNAL</p>
-                <p className="exec-top-sub mt-1">TRADING DISIPLIN, ARAHAN KAFRA.</p>
+                <p className="exec-top-sub mt-1">Profitable Discipline Starts Here</p>
               </div>
               <div className="exec-action-group flex flex-wrap items-center gap-2">
                 <div className="mr-2 text-right">
                   <p className="text-[9px] tracking-[0.14em] text-emerald-300/65">ACCESS STATUS</p>
-                  <p className="text-xs normal-case text-emerald-300">â— Authorized</p>
+                  <p className="text-xs normal-case text-emerald-300">● Authorized</p>
                 </div>
                 <button onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))} className="exec-head-btn inline-flex items-center justify-center gap-1 rounded border border-emerald-400/40 px-2 py-1 text-[10px] hover:bg-emerald-500/20">
                   {isDark ? <Sun size={12} /> : <Moon size={12} />}
