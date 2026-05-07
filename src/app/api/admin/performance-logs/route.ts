@@ -43,24 +43,35 @@ function parseAdminTimeToIso(raw: string): string | null {
   const text = raw.trim();
   if (!text) return null;
 
+  // Always prefer en-GB export style first to avoid US MM/DD ambiguity.
+  // Supports:
+  // - DD/MM/YY, HH:mm:ss
+  // - DD/MM/YYYY, HH:mm:ss
+  const m = text.match(/^(\d{2})\/(\d{2})\/(\d{2}|\d{4}),\s*(\d{2}):(\d{2}):(\d{2})$/);
+  if (m) {
+    const dd = Number(m[1]);
+    const mm = Number(m[2]);
+    const yyOrYyyy = Number(m[3]);
+    const hh = Number(m[4]);
+    const mi = Number(m[5]);
+    const ss = Number(m[6]);
+
+    const fullYear = String(m[3]).length === 4
+      ? yyOrYyyy
+      : (yyOrYyyy >= 70 ? 1900 + yyOrYyyy : 2000 + yyOrYyyy);
+
+    // CSV time is Asia/Kuala_Lumpur (+08:00), convert to UTC ISO.
+    const utcMs = Date.UTC(fullYear, mm - 1, dd, hh - 8, mi, ss);
+    if (Number.isNaN(utcMs)) return null;
+    return new Date(utcMs).toISOString();
+  }
+
+  // Fallback for true ISO-style timestamps only.
+  const isoLike = text.match(/^\d{4}-\d{2}-\d{2}T/);
+  if (!isoLike) return null;
   const isoTry = new Date(text);
   if (!Number.isNaN(isoTry.getTime())) return isoTry.toISOString();
-
-  // Supports: DD/MM/YY, HH:mm:ss (en-GB export format)
-  const m = text.match(/^(\d{2})\/(\d{2})\/(\d{2}),\s*(\d{2}):(\d{2}):(\d{2})$/);
-  if (!m) return null;
-  const dd = Number(m[1]);
-  const mm = Number(m[2]);
-  const yy = Number(m[3]);
-  const hh = Number(m[4]);
-  const mi = Number(m[5]);
-  const ss = Number(m[6]);
-
-  const fullYear = yy >= 70 ? 1900 + yy : 2000 + yy;
-  // CSV time is Asia/Kuala_Lumpur (+08:00), convert to UTC ISO.
-  const utcMs = Date.UTC(fullYear, mm - 1, dd, hh - 8, mi, ss);
-  if (Number.isNaN(utcMs)) return null;
-  return new Date(utcMs).toISOString();
+  return null;
 }
 
 function toSecEpoch(iso: string): number {

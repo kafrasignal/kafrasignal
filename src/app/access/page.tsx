@@ -732,7 +732,7 @@ export default function Home() {
               <div className="exec-action-group flex flex-wrap items-center gap-2">
                 <div className="mr-2 text-right">
                   <p className="text-[9px] tracking-[0.14em] text-emerald-300/65">ACCESS STATUS</p>
-                  <p className="text-xs normal-case text-emerald-300">Authorized</p>
+                  <p className="text-xs normal-case text-emerald-300">{"\u25CF Authorized"}</p>
                 </div>
                 <button onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))} className="exec-head-btn inline-flex items-center justify-center gap-1 rounded border border-emerald-400/40 px-2 py-1 text-[10px] hover:bg-emerald-500/20">
                   {isDark ? <Sun size={12} /> : <Moon size={12} />}
