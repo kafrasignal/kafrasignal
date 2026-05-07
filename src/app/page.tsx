@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export default function LandingPage() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const statsSectionRef = useRef<HTMLElement | null>(null);
   const metrics = useMemo(
     () => [
@@ -50,6 +50,7 @@ export default function LandingPage() {
   );
   const [animatedMetrics, setAnimatedMetrics] = useState<number[]>(() => metrics.map(() => 0));
   const [animationRunId, setAnimationRunId] = useState(0);
+  const [activeOnboardingStep, setActiveOnboardingStep] = useState(0);
   const t = {
     navTagline: "Profitable Discipline Starts Here",
     badge: "Elite XAUUSD Signal Intelligence",
@@ -126,6 +127,13 @@ export default function LandingPage() {
     return () => window.cancelAnimationFrame(frameId);
   }, [animationRunId, metrics]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveOnboardingStep((prev) => (prev + 1) % onboardingSteps.length);
+    }, 1300);
+    return () => clearInterval(interval);
+  }, [onboardingSteps.length]);
+
   return (
     <main className={`min-h-screen ${isDark ? "bg-[#020617] text-white" : "bg-[#dbe5f3] text-[#0f172a]"}`}>
       <div
@@ -173,6 +181,22 @@ export default function LandingPage() {
 
       <header className="mx-auto max-w-5xl px-6 pb-20 pt-24 text-center">
         <div className={`rounded-[2rem] px-6 py-10 md:px-10 ${isDark ? "" : "border border-[#0f172a]/10 bg-white/45 shadow-[0_18px_45px_rgba(15,23,42,0.12)] backdrop-blur-xl"}`}>
+          <div className="mb-6 flex justify-center">
+            <div className="relative inline-flex items-center justify-center">
+              {isDark && (
+                <>
+                  <div className="pointer-events-none absolute inset-[-18%] rounded-full bg-[radial-gradient(circle,rgba(96,165,250,0.2)_0%,rgba(56,189,248,0.1)_44%,rgba(2,6,23,0)_86%)] blur-xl" />
+                  <div className="pointer-events-none absolute inset-[-4%] rounded-full bg-[radial-gradient(circle,#f8fafc_0%,#f8fafc_68%,rgba(248,250,252,0.72)_78%,rgba(2,6,23,0.82)_92%,#020617_100%)]" />
+                </>
+              )}
+              <img
+                src="/kafra-ai.gif"
+                alt="KAFRA AI mascot"
+                className="relative h-[96px] w-auto drop-shadow-[0_8px_24px_rgba(148,163,184,0.28)] md:h-[132px]"
+                loading="eager"
+              />
+            </div>
+          </div>
           <div className={`mb-8 inline-block rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest backdrop-blur-md ${isDark ? "border border-blue-400/40 bg-gradient-to-r from-blue-500/20 to-cyan-400/20 text-blue-300 shadow-[0_0_30px_rgba(37,99,235,0.35)]" : "border border-blue-400/50 bg-blue-100 text-blue-700 shadow-[0_8px_22px_rgba(37,99,235,0.2)]"}`}>
             {t.badge}
           </div>
@@ -243,7 +267,9 @@ export default function LandingPage() {
           {onboardingSteps.map((step, index) => (
             <div
               key={step.title}
-              className={`live-glass-card rounded-3xl border p-6 backdrop-blur-xl ${
+              className={`live-glass-card onboarding-step-card rounded-3xl border p-6 backdrop-blur-xl ${
+                activeOnboardingStep === index ? "onboarding-step-active" : ""
+              } ${
                 isDark
                   ? "border-white/12 bg-gradient-to-b from-slate-800/55 to-slate-900/45 shadow-[0_16px_40px_rgba(2,6,23,0.45)]"
                   : "border-[#0f172a]/12 bg-gradient-to-b from-white/90 to-[#eef4ff] shadow-[0_16px_40px_rgba(15,23,42,0.15)]"
@@ -285,14 +311,14 @@ export default function LandingPage() {
           {[
             { text: '"Las señales llegan claras y rápido. Ahora opero con más calma y menos dudas."', name: "Carlos M., Spain" },
             { text: '"Me gusta porque todo está ordenado: entrada, TP y SL en un solo flujo."', name: "Lucia R., Spain" },
-            { text: '"?????,????????,?????????"', name: "Li Wei, China" },
-            { text: '"????????,?????????????"', name: "Chen Yu, China" },
-            { text: '"??????????????????? ??????????????????????????????????"', name: "Narin S., Thailand" },
-            { text: '"??????????? ?????????????????????? ??????????????????????????"', name: "Pimchanok L., Thailand" },
+            { text: '"信号清晰，提醒及时，执行起来非常顺手。"', name: "Li Wei, China" },
+            { text: '"界面很清楚，我能更快做出交易决定。"', name: "Chen Yu, China" },
+            { text: '"ระบบใช้งานง่ายมาก แค่ทำตามแผนและจัดการความเสี่ยงก็พอ"', name: "Narin S., Thailand" },
+            { text: '"แจ้งเตือนไวและแดชบอร์ดอ่านง่าย ทำให้เทรดมีวินัยขึ้นมาก"', name: "Pimchanok L., Thailand" },
             { text: '"Clean dashboard, fast alerts, and the risk planner actually keeps me disciplined."', name: "Daniel K., UK" },
             { text: '"I finally trade with structure instead of random entries, and my confidence is back."', name: "Mia T., Australia" },
-            { text: '"???????? ????? ????? ???? ????? ??????? ??????? ?????? ????? ????."', name: "Omar A., UAE" },
-            { text: '"???? ??? ?? KAFRA ?? ??????: ????? ?????? ???? ????? ?? ???? ????."', name: "Faisal N., Saudi Arabia" },
+            { text: '"الإشارات واضحة جدًا، والانضباط صار أفضل والقرارات أسرع."', name: "Omar A., UAE" },
+            { text: '"مع KAFRA صار عندي روتين تداول أوضح وقرارات أدق."', name: "Faisal N., Saudi Arabia" },
             { text: '"Fuhhh.. Signal KAFRA ni memang paduu.. Saya ikut plan jer, emosi lebih tenang bhai.."', name: "Hafiz M., Malaysia" },
             { text: '"Dulu overtrade, sekarang lebih disiplin sebab KAFRA dah bagi waktu bila kena ready Entry market, nak kemas rumah pun boleh fokus"', name: "Aina R., Malaysia" },
             { text: '"Scalping 30 minit memang ngam untuk saya yang kerja office, sempat check signal tanpa ganggu kerja."', name: "Shafiq Z., Malaysia" },
@@ -313,13 +339,13 @@ export default function LandingPage() {
         <p className={`mx-auto mb-10 max-w-2xl text-sm md:text-base ${isDark ? "text-slate-400" : "text-slate-600"}`}>{t.pricingSub}</p>
         <div className="grid items-stretch gap-6 md:grid-cols-3">
           {[
-            { name: "7 Days", original: "129 USD", promo: "99 USD", save: "Save 30 USD", active: false, badge: "" },
-            { name: "15 Days", original: "249 USD", promo: "199 USD", save: "Save 50 USD", active: true, badge: "Most Popular" },
-            { name: "30 Days", original: "299 USD", promo: "249 USD", save: "Save 50 USD", active: false, badge: "" },
+            { name: "7 Days", original: "129 USD", promo: "99 USD", save: "Save 30 USD", active: false, badge: "", href: "https://t.me/m/DX_Mki3IYjA1" },
+            { name: "30 Days", original: "299 USD", promo: "249 USD", save: "Save 50 USD", active: true, badge: "Most Popular", href: "https://t.me/m/0IzAZz0DNDVl" },
+            { name: "15 Days", original: "249 USD", promo: "199 USD", save: "Save 50 USD", active: false, badge: "", href: "https://t.me/m/NqE6JkG4YjZl" },
           ].map((plan) => (
             <div
               key={plan.name}
-              className={`live-glass-card rounded-[2rem] border p-8 backdrop-blur-xl ${plan.active ? isDark ? "scale-[1.03] border-blue-500 bg-gradient-to-b from-blue-600/25 to-slate-900/65 shadow-[0_24px_60px_rgba(37,99,235,0.35)]" : "scale-[1.03] border-blue-400 bg-gradient-to-b from-[#dce8ff] to-[#c5d7fb] shadow-[0_24px_60px_rgba(37,99,235,0.22)]" : isDark ? "border-white/12 bg-gradient-to-b from-slate-800/55 to-slate-900/45 shadow-[0_16px_40px_rgba(2,6,23,0.45)]" : "border-[#0f172a]/12 bg-gradient-to-b from-white/90 to-[#eef4ff] shadow-[0_16px_40px_rgba(15,23,42,0.15)]"}`}
+              className={`live-glass-card rounded-[2rem] border p-8 backdrop-blur-xl ${plan.name === "30 Days" ? "pricing-card-shake" : ""} ${plan.active ? isDark ? "scale-[1.03] border-blue-500 bg-gradient-to-b from-blue-600/25 to-slate-900/65 shadow-[0_24px_60px_rgba(37,99,235,0.35)]" : "scale-[1.03] border-blue-400 bg-gradient-to-b from-[#dce8ff] to-[#c5d7fb] shadow-[0_24px_60px_rgba(37,99,235,0.22)]" : isDark ? "border-white/12 bg-gradient-to-b from-slate-800/55 to-slate-900/45 shadow-[0_16px_40px_rgba(2,6,23,0.45)]" : "border-[#0f172a]/12 bg-gradient-to-b from-white/90 to-[#eef4ff] shadow-[0_16px_40px_rgba(15,23,42,0.15)]"}`}
             >
               {plan.badge && (
                 <p className={`mb-4 inline-block rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${isDark ? "border border-blue-400/50 bg-blue-500/20 text-blue-300" : "border border-blue-500/40 bg-blue-100 text-blue-700"}`}>
@@ -329,7 +355,7 @@ export default function LandingPage() {
               <h3 className={`text-xl font-black uppercase ${isDark ? "text-white" : "text-[#0f172a]"}`}>{plan.name}</h3>
               <div className="my-6">
                 <p className={`text-sm font-semibold line-through ${isDark ? "text-slate-400" : "text-slate-500"}`}>{plan.original}</p>
-                <p className={`font-mono text-5xl font-black ${plan.active ? "text-blue-600" : isDark ? "text-white" : "text-[#0f172a]"}`}>{plan.promo}</p>
+                <p className={`font-mono text-5xl font-black ${isDark && plan.name === "30 Days" ? "text-white" : plan.active ? "text-blue-600" : isDark ? "text-white" : "text-[#0f172a]"}`}>{plan.promo}</p>
                 <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-emerald-400">Promo Active</p>
                 <p className={`mt-1 text-[11px] font-bold uppercase tracking-[0.14em] ${isDark ? "text-blue-300" : "text-blue-700"}`}>{plan.save}</p>
               </div>
@@ -343,7 +369,9 @@ export default function LandingPage() {
                 <li>* Performance Dashboard</li>
               </ul>
               <Link
-                href="/access"
+                href={plan.href ?? "/access"}
+                target={plan.href ? "_blank" : undefined}
+                rel={plan.href ? "noopener noreferrer" : undefined}
                 className={`mt-auto block w-full rounded-2xl py-4 text-xs font-black uppercase tracking-[0.16em] ${plan.active ? "bg-blue-600 hover:bg-blue-700 text-white" : isDark ? "border border-white/20 bg-white/5 text-white hover:bg-white/10" : "border border-[#0f172a]/20 bg-white text-[#0f172a] hover:bg-slate-100"}`}
               >
                 Get Access
@@ -438,4 +466,6 @@ export default function LandingPage() {
     </main>
   );
 }
+
+
 

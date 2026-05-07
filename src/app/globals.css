@@ -626,11 +626,53 @@ body {
   }
 }
 
+@keyframes pricingCardShake {
+  0%, 100% { transform: translateX(0) scale(1.03); }
+  20% { transform: translateX(-1px) rotate(-0.35deg) scale(1.03); }
+  40% { transform: translateX(1px) rotate(0.35deg) scale(1.03); }
+  60% { transform: translateX(-1px) rotate(-0.25deg) scale(1.03); }
+  80% { transform: translateX(1px) rotate(0.25deg) scale(1.03); }
+}
+
+@keyframes onboardingStepPulse {
+  0%, 100% {
+    transform: translateY(0);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.28), 0 0 0 rgba(59, 130, 246, 0);
+  }
+  50% {
+    transform: translateY(-4px);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.5), 0 0 28px rgba(59, 130, 246, 0.25);
+  }
+}
+
 .live-glass-card {
   position: relative;
   overflow: hidden;
   isolation: isolate;
   animation: liveGlassPulse 3.6s ease-in-out infinite;
+}
+
+.pricing-card-shake {
+  animation:
+    liveGlassPulse 3.6s ease-in-out infinite,
+    pricingCardShake 1.8s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.onboarding-step-card {
+  transition: transform 280ms ease, box-shadow 280ms ease, border-color 280ms ease;
+}
+
+.onboarding-step-active {
+  animation: onboardingStepPulse 1.15s ease-in-out;
+  border-color: rgba(96, 165, 250, 0.7) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-card-shake,
+  .onboarding-step-active {
+    animation: none !important;
+  }
 }
 
 .live-glass-card::before,
