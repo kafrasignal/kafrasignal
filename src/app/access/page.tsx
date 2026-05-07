@@ -114,21 +114,25 @@ export default function Home() {
   };
 
   const fetchDashboardData = async (sb: NonNullable<ReturnType<typeof getSupabaseClient>>) => {
-    const [signalRes, serverLogRes] = await Promise.all([
-      sb.from("signals").select("*").eq("pair", "XAUUSD").order("created_at", { ascending: false }).limit(50),
-      fetch("/api/performance-logs?limit=300", { cache: "no-store" }),
-    ]);
-
-    if (!signalRes.error && signalRes.data) setSignals(signalRes.data as TradingSignal[]);
     try {
-      if (serverLogRes.ok) {
-        const json = (await serverLogRes.json()) as { data?: PerformanceLog[] };
-        if (Array.isArray(json.data)) setLogs(json.data);
+      const [signalRes, serverLogRes] = await Promise.all([
+        sb.from("signals").select("*").eq("pair", "XAUUSD").order("created_at", { ascending: false }).limit(50),
+        fetch("/api/performance-logs?limit=300", { cache: "no-store" }),
+      ]);
+
+      if (!signalRes.error && signalRes.data) setSignals(signalRes.data as TradingSignal[]);
+      try {
+        if (serverLogRes.ok) {
+          const json = (await serverLogRes.json()) as { data?: PerformanceLog[] };
+          if (Array.isArray(json.data)) setLogs(json.data);
+        }
+      } catch {
+        // keep existing logs when server fetch fails
       }
+      setLastSync(new Date().toLocaleTimeString());
     } catch {
-      // keep existing logs when server fetch fails
+      // swallow transient network/runtime fetch errors to avoid unhandledRejection spam
     }
-    setLastSync(new Date().toLocaleTimeString());
   };
 
   useEffect(() => {
@@ -728,7 +732,7 @@ export default function Home() {
               <div className="exec-action-group flex flex-wrap items-center gap-2">
                 <div className="mr-2 text-right">
                   <p className="text-[9px] tracking-[0.14em] text-emerald-300/65">ACCESS STATUS</p>
-                  <p className="text-xs normal-case text-emerald-300">● Authorized</p>
+                  <p className="text-xs normal-case text-emerald-300">Authorized</p>
                 </div>
                 <button onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))} className="exec-head-btn inline-flex items-center justify-center gap-1 rounded border border-emerald-400/40 px-2 py-1 text-[10px] hover:bg-emerald-500/20">
                   {isDark ? <Sun size={12} /> : <Moon size={12} />}

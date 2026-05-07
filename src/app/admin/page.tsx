@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Subscriber = {
   id: string;
@@ -121,6 +121,8 @@ export default function AdminPage() {
   const [subPage, setSubPage] = useState(1);
   const [perfRowsPerPage, setPerfRowsPerPage] = useState<number | "all">(10);
   const [perfPage, setPerfPage] = useState(1);
+  const [importingPerfCsv, setImportingPerfCsv] = useState(false);
+  const perfCsvInputRef = useRef<HTMLInputElement | null>(null);
 
   const headers = useMemo(() => ({ "x-admin-key": adminKey }), [adminKey]);
 
@@ -512,6 +514,32 @@ export default function AdminPage() {
     setStatus(`Exported ${rows.length} performance rows.`);
   };
 
+  const importPerfCsv = async (file: File) => {
+    if (!file) return;
+    setImportingPerfCsv(true);
+    try {
+      const csv = await file.text();
+      const res = await fetch("/api/admin/performance-logs", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ csv }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setStatus(json.error ?? "Failed importing performance CSV.");
+        return;
+      }
+      setStatus(`Import done. Updated: ${json.updated ?? 0}, Inserted: ${json.inserted ?? 0}, Skipped: ${json.skipped ?? 0}.`);
+      await loadAll();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed importing performance CSV.";
+      setStatus(message);
+    } finally {
+      setImportingPerfCsv(false);
+      if (perfCsvInputRef.current) perfCsvInputRef.current.value = "";
+    }
+  };
+
   if (!authorized) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100 p-6">
@@ -796,6 +824,23 @@ export default function AdminPage() {
                     >
                       Export CSV
                     </button>
+                    <button
+                      onClick={() => perfCsvInputRef.current?.click()}
+                      disabled={importingPerfCsv}
+                      className="rounded border border-blue-500 bg-blue-700 px-3 py-2 text-xs font-semibold hover:bg-blue-600 disabled:opacity-40"
+                    >
+                      {importingPerfCsv ? "Importing..." : "Import CSV"}
+                    </button>
+                    <input
+                      ref={perfCsvInputRef}
+                      type="file"
+                      accept=".csv,text/csv"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void importPerfCsv(file);
+                      }}
+                    />
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">

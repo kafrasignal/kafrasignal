@@ -1,6 +1,49 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { generateAccessKey } from "@/lib/keygen";
+
+async function sendTelegramRegisterAlert(payload: {
+  name: string;
+  email: string;
+  phone: string;
+  packageName: string;
+  durationDays: number;
+  accessKey: string;
+  expiredAt: string;
+  linkToken: string;
+  isExistingSubscriber: boolean;
+}) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!botToken || !chatId) return;
+
+  const message = [
+    "🚀 *New KAFRA SIGNAL Registration*",
+    "",
+    `*Name:* ${payload.name}`,
+    `*Email:* ${payload.email}`,
+    `*Phone:* ${payload.phone}`,
+    `*Package:* ${payload.packageName} (${payload.durationDays} days)`,
+    `*Status:* ${payload.isExistingSubscriber ? "Existing subscriber (renewed/updated)" : "New subscriber"}`,
+    `*Access Key:* \`${payload.accessKey}\``,
+    `*Expiry:* ${new Date(payload.expiredAt).toLocaleString("en-GB", { timeZone: "Asia/Kuala_Lumpur" })}`,
+    `*Token:* \`${payload.linkToken}\``,
+  ].join("\n");
+
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "Markdown",
+      }),
+    });
+  } catch {
+    // swallow alert failure so registration flow is never blocked
+  }
+}
 
 export async function GET(_: Request, { params }: { params: Promise<{ token: string }> }) {
   const admin = getSupabaseAdmin();
@@ -51,10 +94,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   const nowMs = Date.now();
 
   let subscriberId = "";
+  let isExistingSubscriber = false;
   const { data: existingSub, error: existingSubError } = await admin.from("subscribers").select("id").eq("email", normalizedEmail).maybeSingle();
   if (existingSubError) return NextResponse.json({ error: existingSubError.message }, { status: 500 });
 
   if (existingSub) {
+    isExistingSubscriber = true;
     subscriberId = existingSub.id;
     await admin
       .from("subscribers")
@@ -140,5 +185,18 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     })
     .eq("token", token);
 
+  await sendTelegramRegisterAlert({
+    name: normalizedName,
+    email: normalizedEmail,
+    phone: normalizedPhone,
+    packageName: link.package_name,
+    durationDays: Number(link.duration_days),
+    accessKey,
+    expiredAt: expiresAt,
+    linkToken: token,
+    isExistingSubscriber,
+  });
+
   return NextResponse.json({ ok: true, access_key: accessKey, expired_at: expiresAt, package_name: link.package_name, duration_days: link.duration_days });
 }
+
