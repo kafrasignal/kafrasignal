@@ -284,7 +284,7 @@ export default function LandingPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-12">
-        <h2 className="mb-8 text-center text-3xl font-black uppercase tracking-tight">Why KAFRA_</h2>
+        <h2 className="mb-8 text-center text-3xl font-black uppercase tracking-tight">Why KAFRA SIGNAL_</h2>
         <div
           className={`overflow-hidden rounded-3xl border ${
             isDark ? "border-white/12 bg-slate-900/40" : "border-[#0f172a]/12 bg-white/70"
@@ -293,7 +293,7 @@ export default function LandingPage() {
           <div className={`grid grid-cols-3 px-5 py-4 text-xs font-black uppercase tracking-[0.12em] ${isDark ? "bg-white/5" : "bg-[#eef4ff]"}`}>
             <p>Category</p>
             <p className="text-blue-500">KAFRA SIGNAL</p>
-            <p className={isDark ? "text-slate-300" : "text-slate-700"}>Generic Signal Group</p>
+            <p className={isDark ? "text-slate-300" : "text-slate-700"}>Generic Signal</p>
           </div>
           {comparisons.map((row) => (
             <div key={row.title} className={`grid grid-cols-3 gap-4 px-5 py-4 text-sm ${isDark ? "border-t border-white/10" : "border-t border-[#0f172a]/10"}`}>
