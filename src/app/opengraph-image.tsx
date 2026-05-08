@@ -1,7 +1,7 @@
 ﻿import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "KAFRA SIGNAL | Trading Disiplin, Arahan KAFRA.";
+export const alt = "KAFRA SIGNAL | Profitable Discipline Starts Here";
 export const size = {
   width: 1200,
   height: 630,
@@ -30,7 +30,7 @@ export default function OpenGraphImage() {
             <div style={{ fontSize: 66, fontWeight: 800, letterSpacing: -2, color: "#3b82f6" }}>
               KAFRA <span style={{ color: "#f8fafc" }}>SIGNAL</span>
             </div>
-            <div style={{ fontSize: 28, opacity: 0.86 }}>Trading Disiplin, Arahan KAFRA.</div>
+            <div style={{ fontSize: 28, opacity: 0.86 }}>Profitable Discipline Starts Here</div>
           </div>
           <div
             style={{
