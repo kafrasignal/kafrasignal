@@ -131,6 +131,18 @@ function classifyCycleOutcome(args: {
   return "tp1";
 }
 
+function computeStoredNetPips(args: {
+  outcome: "tp1" | "tp2" | "tp3" | "be" | "sl";
+  realizedPips: number;
+  peakPips: number;
+}) {
+  if (args.outcome === "be") {
+    // KAFRA policy: BE stores 85% of achieved peak run-up.
+    return Number(Math.max(0, args.peakPips * 0.85).toFixed(1));
+  }
+  return Number(Math.max(args.realizedPips, args.peakPips).toFixed(1));
+}
+
 export async function POST(req: NextRequest) {
   const expectedSecret = process.env.TRADINGVIEW_WEBHOOK_SECRET;
   if (!expectedSecret) {
@@ -226,7 +238,6 @@ export async function POST(req: NextRequest) {
     if (hitOutcome) {
       const realizedPips = currentPips;
       const peakPips = Math.max(maxFloatingPips, realizedPips);
-      const historyPips = Math.max(realizedPips, peakPips);
 
       const { error: closeError } = await admin
         .from("signals")
@@ -247,6 +258,11 @@ export async function POST(req: NextRequest) {
         tp1: Number(current.tp1),
         tp2: Number(current.tp2),
         tp3: current.tp3 === null ? null : Number(current.tp3),
+        peakPips,
+      });
+      const historyPips = computeStoredNetPips({
+        outcome: classifiedOutcome,
+        realizedPips,
         peakPips,
       });
 
@@ -324,7 +340,6 @@ export async function POST(req: NextRequest) {
     const points = current.type === "buy" ? closePrice - Number(current.entry_target) : Number(current.entry_target) - closePrice;
     const realizedPips = points * GOLD_PIPS_MULTIPLIER;
     const peakPips = Math.max(Number(current.max_floating_pips ?? 0), realizedPips);
-    const historyPips = Math.max(realizedPips, peakPips);
     const classifiedOutcome = outcomeRaw
       ? (outcomeRaw as "tp1" | "tp2" | "tp3" | "be" | "sl")
       : classifyCycleOutcome({
@@ -337,6 +352,11 @@ export async function POST(req: NextRequest) {
         tp3: current.tp3 === null ? null : Number(current.tp3),
         peakPips,
       });
+    const historyPips = computeStoredNetPips({
+      outcome: classifiedOutcome,
+      realizedPips,
+      peakPips,
+    });
 
     const { error: closeError } = await admin
       .from("signals")
@@ -451,11 +471,17 @@ export async function POST(req: NextRequest) {
         .update({ status: "closed", updated_at: new Date().toISOString() })
         .eq("id", previous.id);
 
+      const historyPips = computeStoredNetPips({
+        outcome,
+        realizedPips,
+        peakPips,
+      });
+
       await admin.from("performance_logs").insert({
         mode,
         type: previous.type,
         outcome,
-        net_pips: realizedPips,
+        net_pips: historyPips,
         peak_pips: peakPips,
       });
     }
@@ -527,6 +553,11 @@ export async function POST(req: NextRequest) {
     const points = type === "buy" ? livePrice - entryTarget : entryTarget - livePrice;
     const realizedPips = points * GOLD_PIPS_MULTIPLIER;
     const peakPips = Math.max(0, realizedPips);
+    const historyPips = computeStoredNetPips({
+      outcome: immediateOutcome,
+      realizedPips,
+      peakPips,
+    });
 
     const { data: logData, error: logError } = await admin
       .from("performance_logs")
@@ -534,7 +565,7 @@ export async function POST(req: NextRequest) {
         mode,
         type,
         outcome: immediateOutcome,
-        net_pips: realizedPips,
+        net_pips: historyPips,
         peak_pips: peakPips,
       })
       .select("id")
@@ -550,7 +581,7 @@ export async function POST(req: NextRequest) {
       `*Pair:* ${pair}`,
       `*Type:* ${type.toUpperCase()}`,
       `*Outcome:* ${immediateOutcome.toUpperCase()}`,
-      `*Net Pips:* ${realizedPips.toFixed(1)}`,
+      `*Net Pips:* ${historyPips.toFixed(1)}`,
       `*Peak Pips:* ${peakPips.toFixed(1)}`,
     ]);
 
