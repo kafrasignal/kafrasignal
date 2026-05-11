@@ -78,6 +78,15 @@ create table if not exists public.package_links (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.link_redemptions (
+  id uuid primary key default gen_random_uuid(),
+  package_link_id uuid not null references public.package_links(id) on delete cascade,
+  subscriber_id uuid references public.subscribers(id) on delete set null,
+  email_normalized text,
+  phone_normalized text,
+  created_at timestamptz not null default now()
+);
+
 alter table public.access_keys add column if not exists subscriber_id uuid references public.subscribers(id) on delete set null;
 alter table public.access_keys add column if not exists is_active boolean not null default true;
 alter table public.subscribers add column if not exists introducer text;
@@ -86,6 +95,12 @@ alter table public.package_links add column if not exists click_count integer no
 alter table public.package_links add column if not exists last_clicked_at timestamptz;
 create unique index if not exists access_keys_one_per_subscriber on public.access_keys(subscriber_id) where subscriber_id is not null;
 create unique index if not exists subscribers_email_unique_ci on public.subscribers (lower(email));
+create unique index if not exists link_redemptions_link_email_unique
+  on public.link_redemptions(package_link_id, email_normalized)
+  where email_normalized is not null;
+create unique index if not exists link_redemptions_link_phone_unique
+  on public.link_redemptions(package_link_id, phone_normalized)
+  where phone_normalized is not null;
 
 -- Backfill/repair for existing databases where outcome constraint was created without `be`.
 do $$
@@ -118,6 +133,7 @@ alter table public.performance_logs enable row level security;
 alter table public.subscribers enable row level security;
 alter table public.performance_log_edits enable row level security;
 alter table public.package_links enable row level security;
+alter table public.link_redemptions enable row level security;
 
 create policy "anon_can_read_signals" on public.signals for select to anon using (true);
 create policy "anon_can_read_logs" on public.performance_logs for select to anon using (true);

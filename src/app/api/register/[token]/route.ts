@@ -86,9 +86,41 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     return NextResponse.json({ error: "Please enter a valid phone number (9-15 digits)." }, { status: 400 });
   }
 
-  const { data: link, error: linkError } = await admin.from("package_links").select("package_name,duration_days,is_active,agent_name").eq("token", token).maybeSingle();
+  const { data: link, error: linkError } = await admin
+    .from("package_links")
+    .select("id,package_name,duration_days,is_active,agent_name")
+    .eq("token", token)
+    .maybeSingle();
   if (linkError) return NextResponse.json({ error: linkError.message }, { status: 500 });
   if (!link || !link.is_active) return NextResponse.json({ error: "Invalid or inactive link" }, { status: 404 });
+
+  const { data: priorRedemptionByEmail, error: priorRedemptionByEmailError } = await admin
+    .from("link_redemptions")
+    .select("id,subscriber_id")
+    .eq("package_link_id", link.id)
+    .eq("email_normalized", normalizedEmail)
+    .limit(1)
+    .maybeSingle();
+  if (priorRedemptionByEmailError) return NextResponse.json({ error: priorRedemptionByEmailError.message }, { status: 500 });
+
+  const { data: priorRedemptionByPhone, error: priorRedemptionByPhoneError } = await admin
+    .from("link_redemptions")
+    .select("id,subscriber_id")
+    .eq("package_link_id", link.id)
+    .eq("phone_normalized", normalizedPhone)
+    .limit(1)
+    .maybeSingle();
+  if (priorRedemptionByPhoneError) return NextResponse.json({ error: priorRedemptionByPhoneError.message }, { status: 500 });
+
+  if (priorRedemptionByEmail || priorRedemptionByPhone) {
+    return NextResponse.json(
+      {
+        error: "Link already redeemed for this account. Please use a new package link for renewal.",
+        duplicate_redeem: true,
+      },
+      { status: 409 },
+    );
+  }
 
   const extensionMs = Number(link.duration_days) * 24 * 60 * 60 * 1000;
   const nowMs = Date.now();
@@ -170,6 +202,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   }
 
   if (keyErrorMsg) return NextResponse.json({ error: keyErrorMsg }, { status: 500 });
+
+  const { error: redemptionInsertError } = await admin.from("link_redemptions").insert({
+    package_link_id: link.id,
+    subscriber_id: subscriberId,
+    email_normalized: normalizedEmail,
+    phone_normalized: normalizedPhone,
+  });
+  if (redemptionInsertError) {
+    // If concurrent duplicate registration happened at same time, return duplicate status.
+    if ((redemptionInsertError as { code?: string }).code === "23505") {
+      return NextResponse.json(
+        {
+          error: "Link already redeemed for this account. Please use a new package link for renewal.",
+          duplicate_redeem: true,
+        },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ error: redemptionInsertError.message }, { status: 500 });
+  }
 
   const { data: linkCounterData } = await admin
     .from("package_links")
