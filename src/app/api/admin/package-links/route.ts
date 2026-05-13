@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
   const MAX_RETRIES = 12;
   for (let i = 0; i < MAX_RETRIES; i += 1) {
-    const token = generateToken(12);
+    const token = generateToken(4);
     const { data, error } = await admin
       .from("package_links")
       .insert({
