@@ -554,8 +554,8 @@ export default function AdminPage() {
       r.mode,
       r.type,
       r.outcome.toUpperCase(),
-      r.net_pips.toFixed(1),
-      r.peak_pips === null ? "" : String(r.peak_pips),
+      Number(r.net_pips).toFixed(1),
+      r.peak_pips === null ? "" : Number(r.peak_pips).toFixed(1),
     ]);
     const escapeCsv = (value: string) => `"${value.replace(/"/g, '""')}"`;
     const content = [header, ...csvRows]
@@ -981,8 +981,8 @@ export default function AdminPage() {
                 {visiblePerfLogs.map((l) => {
                   const d = editDraft[l.id] ?? {
                     outcome: l.outcome,
-                    net_pips: String(l.net_pips),
-                    peak_pips: l.peak_pips === null ? "" : String(l.peak_pips),
+                    net_pips: Number(l.net_pips).toFixed(1),
+                    peak_pips: l.peak_pips === null ? "" : Number(l.peak_pips).toFixed(1),
                     note: "",
                   };
 
