@@ -208,6 +208,24 @@ export default function AdminPage() {
     });
   }, [logs, perfMode, perfStartMs, perfEndMs]);
 
+  const packageOptions = useMemo(() => {
+    const names = new Set<string>(["Package 7D", "Package 15D", "Package 30D"]);
+    for (const link of links) {
+      const name = link.package_name?.trim();
+      if (name) names.add(name);
+    }
+    const parseDays = (label: string) => {
+      const match = label.match(/(\d+)\s*D/i);
+      return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
+    };
+    return Array.from(names).sort((a, b) => {
+      const ad = parseDays(a);
+      const bd = parseDays(b);
+      if (ad !== bd) return ad - bd;
+      return a.localeCompare(b);
+    });
+  }, [links]);
+
   const totalPerfPages = useMemo(() => {
     if (perfRowsPerPage === "all") return 1;
     return Math.max(1, Math.ceil(filteredPerfLogs.length / perfRowsPerPage));
@@ -652,9 +670,9 @@ export default function AdminPage() {
                 <input placeholder="Phone" value={newSub.phone} onChange={(e) => setNewSub((s) => ({ ...s, phone: e.target.value }))} className="rounded border border-slate-600 bg-slate-950 px-3 py-2" />
                 <input placeholder="Introducer" value={newSub.introducer} onChange={(e) => setNewSub((s) => ({ ...s, introducer: e.target.value }))} className="rounded border border-slate-600 bg-slate-950 px-3 py-2" />
                 <select value={newSub.package_name} onChange={(e) => setNewSub((s) => ({ ...s, package_name: e.target.value }))} className="rounded border border-slate-600 bg-slate-950 px-3 py-2">
-                  <option value="Package 7D">Package 7D</option>
-                  <option value="Package 15D">Package 15D</option>
-                  <option value="Package 30D">Package 30D</option>
+                  {packageOptions.map((pkg) => (
+                    <option key={pkg} value={pkg}>{pkg}</option>
+                  ))}
                 </select>
               </div>
               <button onClick={() => void createSubscriber()} className="mt-3 rounded bg-emerald-600 px-3 py-2 font-semibold">Create</button>
@@ -750,9 +768,9 @@ export default function AdminPage() {
                       <td className="px-3 py-2">
                         {editingSubId === s.id ? (
                           <select value={editSubDraft.package_name} onChange={(e) => setEditSubDraft((d) => ({ ...d, package_name: e.target.value }))} className="w-32 rounded border border-slate-600 bg-slate-950 px-2 py-1">
-                            <option value="Package 7D">Package 7D</option>
-                            <option value="Package 15D">Package 15D</option>
-                            <option value="Package 30D">Package 30D</option>
+                            {packageOptions.map((pkg) => (
+                              <option key={pkg} value={pkg}>{pkg}</option>
+                            ))}
                           </select>
                         ) : s.package_name}
                       </td>
