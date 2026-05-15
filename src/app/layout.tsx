@@ -15,7 +15,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "KAFRA SIGNAL",
   description: "Profitable Discipline Starts Here",
-  metadataBase: new URL("https://kafrasignal.ezos.my"),
+  metadataBase: new URL("https://signal.kafra.ai"),
   icons: {
     icon: [
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -29,13 +29,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "KAFRA SIGNAL",
     description: "Profitable Discipline Starts Here",
-    url: "https://kafrasignal.ezos.my",
+    url: "https://signal.kafra.ai",
     siteName: "KAFRA SIGNAL",
     images: [
       {
-        url: "/opengraph-image.png",
+        url: "/kafra-logo.png",
         width: 1200,
-        height: 630,
+        height: 1200,
         alt: "KAFRA SIGNAL | Profitable Discipline Starts Here",
       },
     ],
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "KAFRA SIGNAL",
     description: "Profitable Discipline Starts Here",
-    images: ["/opengraph-image.png"],
+    images: ["/kafra-logo.png"],
   },
 };
 
